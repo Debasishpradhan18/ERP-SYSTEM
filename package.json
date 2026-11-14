@@ -1,0 +1,14 @@
+{
+  "name": "campus-erp-root",
+  "version": "1.0.0",
+  "description": "College ERP - Student Management System (MERN)",
+  "scripts": {
+    "backend": "cd backend && npm run dev",
+    "frontend": "cd frontend && npm run dev",
+    "seed": "cd backend && npm run seed",
+    "build": "cd frontend && npm run build"
+  },
+  "keywords": ["college", "erp", "student-management", "mern"],
+  "author": "Debasish Pradhan",
+  "license": "ISC"
+}
