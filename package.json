@@ -1,14 +1,15 @@
 {
   "name": "campus-erp-root",
   "version": "1.0.0",
-  "description": "College ERP - Student Management System (MERN)",
+  "description": "College ERP - Student Management System (MySQL + Express + React + Node)",
   "scripts": {
     "backend": "cd backend && npm run dev",
     "frontend": "cd frontend && npm run dev",
-    "seed": "cd backend && npm run seed",
+    "seed": "cd backend && npm run seed:sql",
+    "seed:sql": "cd backend && npm run seed:sql",
     "build": "cd frontend && npm run build"
   },
-  "keywords": ["college", "erp", "student-management", "mern"],
+  "keywords": ["college", "erp", "student-management", "mysql", "react", "vite"],
   "author": "Debasish Pradhan",
   "license": "ISC"
 }

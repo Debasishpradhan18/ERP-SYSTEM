@@ -7,9 +7,11 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "seed": "node utils/seedData.js"
+    "seed": "node utils/seedMySQL.js",
+    "seed:sql": "node utils/seedMySQL.js",
+    "seed:mongo": "node utils/seedData.js"
   },
-  "keywords": ["erp", "college", "student", "management", "mern"],
+  "keywords": ["erp", "college", "student", "management", "mysql", "mern"],
   "author": "Debasish Pradhan",
   "license": "ISC",
   "dependencies": {
@@ -19,6 +21,8 @@
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.4.1",
-    "multer": "^1.4.5-lts.1"
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.12.0",
+    "sequelize": "^6.37.5"
   }
 }
