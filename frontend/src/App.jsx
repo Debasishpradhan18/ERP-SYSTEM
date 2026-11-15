@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
+import DirectLogin from './pages/auth/DirectLogin';
 import RoleSelection from './pages/auth/RoleSelection';
 import StudentLogin from './pages/auth/StudentLogin';
 import FacultyLogin from './pages/auth/FacultyLogin';
@@ -36,11 +37,12 @@ function App() {
         }}
       />
       <Routes>
-        {/* Authentication Routes */}
-        <Route path="/" element={<RoleSelection />} />
-        <Route path="/login/student" element={<StudentLogin />} />
-        <Route path="/login/faculty" element={<FacultyLogin />} />
-        <Route path="/login/admin" element={<AdminLogin />} />
+        {/* Direct College Portal Login with Username, Password & Captcha */}
+        <Route path="/" element={<DirectLogin />} />
+        <Route path="/roles" element={<RoleSelection />} />
+        <Route path="/login/student" element={<DirectLogin />} />
+        <Route path="/login/faculty" element={<DirectLogin />} />
+        <Route path="/login/admin" element={<DirectLogin />} />
 
         {/* Student Portal Routes */}
         <Route path="/student" element={<StudentLayout />}>

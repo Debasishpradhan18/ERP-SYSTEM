@@ -1,6 +1,7 @@
 import sequelize from '../../config/mysql.js';
 import User from './User.js';
 import Student from './Student.js';
+import Faculty from './Faculty.js';
 import Attendance from './Attendance.js';
 import Timetable from './Timetable.js';
 import Result from './Result.js';
@@ -11,6 +12,9 @@ import Notice from './Notice.js';
 // Define MySQL Foreign Key Associations
 User.hasOne(Student, { foreignKey: 'userId', as: 'student', onDelete: 'CASCADE' });
 Student.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasOne(Faculty, { foreignKey: 'userId', as: 'faculty', onDelete: 'CASCADE' });
+Faculty.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 Student.hasMany(Attendance, { foreignKey: 'studentId', as: 'attendance', onDelete: 'CASCADE' });
 Attendance.belongsTo(Student, { foreignKey: 'studentId', as: 'student' });
@@ -28,6 +32,7 @@ export {
   sequelize,
   User,
   Student,
+  Faculty,
   Attendance,
   Timetable,
   Result,
@@ -40,6 +45,7 @@ export default {
   sequelize,
   User,
   Student,
+  Faculty,
   Attendance,
   Timetable,
   Result,

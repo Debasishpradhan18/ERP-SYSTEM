@@ -23,28 +23,28 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#07090E] flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-[#121622] border border-[#232a3b] rounded-2xl p-8 shadow-2xl">
+    <div className="min-h-screen bg-[#07090E] flex items-center justify-center p-4 py-8">
+      <div className="w-full max-w-md bg-[#121622] border border-[#232a3b] rounded-2xl p-6 sm:p-8 shadow-2xl">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-xs font-medium text-gray-400 hover:text-white mb-6 transition"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-white mb-5 transition"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Role Selection
+          <ArrowLeft className="w-3.5 h-3.5" /> Back to Role Selection
         </Link>
 
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 bg-[#7C3AED] rounded-xl text-white">
-            <ShieldCheck className="w-7 h-7" />
+          <div className="p-2.5 sm:p-3 bg-[#7C3AED] rounded-xl text-white shrink-0 shadow-md shadow-[#7C3AED]/20">
+            <ShieldCheck className="w-6 h-6 sm:w-7 sm:h-7" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-white">Admin Control</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-white">Admin Control</h2>
             <p className="text-xs text-gray-400">Master access for university administrators</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-gray-300 mb-1.5">Admin Email</label>
+            <label className="block text-xs font-semibold text-gray-300 mb-1.5">Admin Email</label>
             <div className="relative">
               <Mail className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
@@ -58,7 +58,7 @@ const AdminLogin = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-300 mb-1.5">Password</label>
+            <label className="block text-xs font-semibold text-gray-300 mb-1.5">Password</label>
             <div className="relative">
               <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
@@ -81,7 +81,7 @@ const AdminLogin = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-[#7C3AED] hover:bg-[#6d28d9] text-white font-semibold rounded-xl text-sm transition shadow-lg shadow-[#7C3AED]/20 flex items-center justify-center"
+            className="w-full py-3 bg-[#7C3AED] hover:bg-[#6d28d9] text-white font-bold rounded-xl text-sm transition shadow-lg shadow-[#7C3AED]/25 flex items-center justify-center active:scale-[0.99]"
           >
             {loading ? 'Authenticating...' : 'Sign In as Administrator'}
           </button>
