@@ -21,7 +21,7 @@ CREATE TABLE `users` (
   `email` VARCHAR(100) UNIQUE NOT NULL,
   `password` VARCHAR(255) NOT NULL,
   `role` ENUM('student', 'faculty', 'admin') DEFAULT 'student',
-  `avatar` VARCHAR(255) DEFAULT 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+  `avatar` TEXT DEFAULT 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
   `phoneNumber` VARCHAR(20) DEFAULT '',
   `isActive` TINYINT(1) DEFAULT 1,
   `createdAt` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

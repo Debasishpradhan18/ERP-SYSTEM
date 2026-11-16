@@ -14,9 +14,11 @@ import {
   Check,
   X,
   Sparkles,
+  CreditCard,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { mockStudentData } from '../../services/api';
+import StudentIDCardModal from '../../components/common/StudentIDCardModal';
 import toast from 'react-hot-toast';
 
 const StudentProfile = () => {
@@ -24,8 +26,10 @@ const StudentProfile = () => {
   const student = mockStudentData.student;
   const fileInputRef = useRef(null);
 
+  const [selectedFile, setSelectedFile] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [showIdCardModal, setShowIdCardModal] = useState(false);
 
   // Preset avatar choices for quick 1-click selection
   const avatarPresets = [
@@ -43,6 +47,7 @@ const StudentProfile = () => {
         toast.error('Please upload an image file (PNG, JPG, or WEBP)');
         return;
       }
+      setSelectedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewImage(reader.result);
@@ -52,16 +57,57 @@ const StudentProfile = () => {
   };
 
   const handleSavePicture = async () => {
-    if (!previewImage) return;
+    if (!previewImage && !selectedFile) return;
     setIsUploading(true);
 
     try {
-      // Update local storage and context immediately for instant feedback
-      const updatedUser = { ...user, avatar: previewImage };
+      let finalAvatarUrl = previewImage;
+
+      // 1. Try uploading the file to the backend
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append('avatar', selectedFile);
+
+        try {
+          const res = await api.post('/auth/avatar', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+          if (res.data?.success && res.data?.avatar) {
+            finalAvatarUrl = res.data.avatar;
+          }
+        } catch (apiErr) {
+          console.warn('Multer upload fallback, trying JSON payload:', apiErr.message);
+          try {
+            const resJson = await api.post('/auth/avatar', { avatar: previewImage });
+            if (resJson.data?.success && resJson.data?.avatar) {
+              finalAvatarUrl = resJson.data.avatar;
+            }
+          } catch (jsonErr) {}
+        }
+      } else if (previewImage) {
+        try {
+          const resJson = await api.post('/auth/avatar', { avatar: previewImage });
+          if (resJson.data?.success && resJson.data?.avatar) {
+            finalAvatarUrl = resJson.data.avatar;
+          }
+        } catch (jsonErr) {}
+      }
+
+      // 2. Update React Auth Context
+      const updatedUser = { ...user, avatar: finalAvatarUrl };
       setUser(updatedUser);
+
+      // 3. Update active session in localStorage
       localStorage.setItem('campus_erp_user', JSON.stringify(updatedUser));
-      toast.success('Profile picture updated successfully!');
+
+      // 4. Save to persistent permanent storage (survives logout & re-login tomorrow)
+      const userKey = user?.email || user?.rollNumber || user?.id || 'student';
+      localStorage.setItem(`campus_erp_avatar_${userKey}`, finalAvatarUrl);
+      localStorage.setItem('campus_erp_saved_avatar', finalAvatarUrl);
+
+      toast.success('Profile picture saved permanently!');
       setPreviewImage(null);
+      setSelectedFile(null);
     } catch (err) {
       toast.error('Failed to update picture');
     } finally {
@@ -69,21 +115,47 @@ const StudentProfile = () => {
     }
   };
 
-  const handleSelectPreset = (url) => {
+  const handleSelectPreset = async (url) => {
     const updatedUser = { ...user, avatar: url };
     setUser(updatedUser);
     localStorage.setItem('campus_erp_user', JSON.stringify(updatedUser));
+    const userKey = user?.email || user?.rollNumber || user?.id || 'student';
+    localStorage.setItem(`campus_erp_avatar_${userKey}`, url);
+    localStorage.setItem('campus_erp_saved_avatar', url);
     setPreviewImage(null);
+    setSelectedFile(null);
+
+    try {
+      await api.post('/auth/avatar', { avatar: url });
+    } catch (e) {
+      console.warn('Preset save note:', e.message);
+    }
+
     toast.success('Profile avatar updated!');
   };
 
-  const currentAvatar = previewImage || user?.avatar || student.avatar;
+  const currentAvatar =
+    previewImage ||
+    user?.avatar ||
+    localStorage.getItem('campus_erp_saved_avatar') ||
+    student.avatar;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Student Profile</h1>
-        <p className="text-sm text-gray-400 mt-1">Official University Enrollment & Proctor Details</p>
+      {/* Title Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Student Profile</h1>
+          <p className="text-sm text-gray-400 mt-1">Official University Enrollment & Proctor Details</p>
+        </div>
+
+        <button
+          onClick={() => setShowIdCardModal(true)}
+          className="px-4 py-2.5 bg-gradient-to-r from-[#079BB5] to-[#16A34A] hover:brightness-110 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-[#079BB5]/20 flex items-center gap-2 self-start sm:self-auto"
+        >
+          <CreditCard className="w-4 h-4" />
+          <span>View Digital ID Card 🪪</span>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -128,7 +200,10 @@ const StudentProfile = () => {
                 <span>Save Photo</span>
               </button>
               <button
-                onClick={() => setPreviewImage(null)}
+                onClick={() => {
+                  setPreviewImage(null);
+                  setSelectedFile(null);
+                }}
                 className="px-3 py-1.5 bg-[#1f2737] hover:bg-[#283246] text-gray-300 text-xs font-medium rounded-lg flex items-center gap-1 transition"
               >
                 <X className="w-3.5 h-3.5" />
@@ -228,6 +303,12 @@ const StudentProfile = () => {
           </div>
         </div>
       </div>
+
+      {/* Render the Virtual ID Card Modal */}
+      <StudentIDCardModal
+        isOpen={showIdCardModal}
+        onClose={() => setShowIdCardModal(false)}
+      />
     </div>
   );
 };

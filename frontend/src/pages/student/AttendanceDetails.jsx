@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { CalendarCheck, CheckCircle2, XCircle, AlertTriangle, Filter, Plus, Send } from 'lucide-react';
+import {
+  CalendarCheck,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Filter,
+  Plus,
+  Send,
+  Calculator,
+  Sparkles,
+  TrendingUp,
+  ShieldCheck,
+  Info,
+} from 'lucide-react';
 import api, { mockAttendanceData } from '../../services/api';
 import toast from 'react-hot-toast';
 
@@ -10,6 +23,11 @@ const AttendanceDetails = () => {
   const [correctionSubject, setCorrectionSubject] = useState('DBMS');
   const [correctionDate, setCorrectionDate] = useState('');
   const [correctionReason, setCorrectionReason] = useState('');
+
+  // Attendance Simulator State
+  const [selectedSubjectCalc, setSelectedSubjectCalc] = useState('Computer Networks');
+  const [hypotheticalClasses, setHypotheticalClasses] = useState(3);
+  const [hypotheticalStatus, setHypotheticalStatus] = useState('attend'); // 'attend' or 'miss'
 
   useEffect(() => {
     const fetchAttendance = async () => {
@@ -42,13 +60,47 @@ const AttendanceDetails = () => {
     return r.type === filterType;
   });
 
+  // Calculate safe bunks or required attendances for 75%
+  const getAttendanceAdvice = (present, total) => {
+    const currentPct = total > 0 ? (present / total) * 100 : 0;
+    if (currentPct >= 75) {
+      // Safe bunks: floor((present - 0.75 * total) / 0.75)
+      const safeBunks = Math.floor((present - 0.75 * total) / 0.75);
+      return {
+        type: 'safe',
+        count: safeBunks,
+        message: safeBunks > 0
+          ? `You can safely miss ${safeBunks} class${safeBunks > 1 ? 'es' : ''} and remain above 75%.`
+          : 'You are right on the 75% borderline! Do not miss the next class.',
+      };
+    } else {
+      // Required consecutive classes: ceil((0.75 * total - present) / 0.25)
+      const needed = Math.ceil((0.75 * total - present) / 0.25);
+      return {
+        type: 'warning',
+        count: needed,
+        message: `Attend next ${needed} consecutive class${needed > 1 ? 'es' : ''} to reach 75% exam eligibility!`,
+      };
+    }
+  };
+
+  // Calculator simulation logic
+  const targetRecord = data.records?.find((r) => r.subject === selectedSubjectCalc) || data.records[0];
+  const simPresent = targetRecord
+    ? hypotheticalStatus === 'attend'
+      ? targetRecord.present + hypotheticalClasses
+      : targetRecord.present
+    : 0;
+  const simTotal = targetRecord ? targetRecord.total + hypotheticalClasses : 0;
+  const simulatedPercentage = simTotal > 0 ? ((simPresent / simTotal) * 100).toFixed(2) : '0.00';
+
   return (
     <div className="space-y-6">
       {/* Title Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Attendance Details</h1>
-          <p className="text-sm text-gray-400 mt-1">Subject-wise attendance record</p>
+          <p className="text-sm text-gray-400 mt-1">Subject-wise attendance record & exam eligibility analysis</p>
         </div>
 
         <button
@@ -99,10 +151,128 @@ const AttendanceDetails = () => {
         </div>
       </div>
 
-      {/* Table Section */}
+      {/* NEW FEATURE: Smart Attendance Bunk & 75% Recovery Calculator */}
+      <div className="bg-[#121622] border border-[#232a3b] rounded-2xl p-6 shadow-xl relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-3 border-b border-[#232a3b]">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-[#079BB5]/20 text-[#079BB5] rounded-xl">
+              <Calculator className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-white tracking-wide flex items-center gap-2">
+                <span>Attendance Target & Safe Bunk Predictor</span>
+                <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold uppercase">
+                  AI Analytics
+                </span>
+              </h2>
+              <p className="text-xs text-gray-400">Calculate exam eligibility and safe class misses</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+          {/* Controls */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                  Select Subject
+                </label>
+                <select
+                  value={selectedSubjectCalc}
+                  onChange={(e) => setSelectedSubjectCalc(e.target.value)}
+                  className="w-full bg-[#171d2b] border border-[#232a3b] rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-[#079BB5]"
+                >
+                  {data.records?.map((r) => (
+                    <option key={r.subject} value={r.subject}>
+                      {r.subject} ({r.percentage})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                  Simulation Scenario
+                </label>
+                <div className="flex bg-[#171d2b] p-1 rounded-xl border border-[#232a3b]">
+                  <button
+                    type="button"
+                    onClick={() => setHypotheticalStatus('attend')}
+                    className={`flex-1 py-1 text-xs font-semibold rounded-lg transition ${
+                      hypotheticalStatus === 'attend'
+                        ? 'bg-[#16A34A] text-white shadow-sm'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    If I Attend Next
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHypotheticalStatus('miss')}
+                    className={`flex-1 py-1 text-xs font-semibold rounded-lg transition ${
+                      hypotheticalStatus === 'miss'
+                        ? 'bg-[#DC3545] text-white shadow-sm'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    If I Miss Next
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center text-xs text-gray-300 mb-1">
+                <span>Number of future classes: <strong className="text-white text-sm">{hypotheticalClasses}</strong></span>
+                <span className="text-[#079BB5]">{hypotheticalStatus === 'attend' ? '+ Attend' : '- Miss'}</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="10"
+                value={hypotheticalClasses}
+                onChange={(e) => setHypotheticalClasses(parseInt(e.target.value, 10))}
+                className="w-full accent-[#079BB5] cursor-pointer"
+              />
+            </div>
+          </div>
+
+          {/* Real-time Projected Result Card */}
+          <div className="p-4 rounded-xl bg-[#171d2b] border border-[#232a3b] flex flex-col items-center text-center justify-between">
+            <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Projected Percentage</p>
+            <div className="my-2">
+              <span
+                className={`text-4xl font-black ${
+                  parseFloat(simulatedPercentage) >= 75 ? 'text-emerald-400' : 'text-red-400'
+                }`}
+              >
+                {simulatedPercentage}%
+              </span>
+              <p className="text-[11px] text-gray-400 mt-1">
+                From current {targetRecord?.percentage}
+              </p>
+            </div>
+
+            <div className="w-full pt-2 border-t border-[#232a3b]/70">
+              <span
+                className={`inline-block w-full py-1 text-xs font-bold rounded-lg ${
+                  parseFloat(simulatedPercentage) >= 75
+                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                    : 'bg-red-500/10 text-red-400 border border-red-500/30'
+                }`}
+              >
+                {parseFloat(simulatedPercentage) >= 75 ? 'Eligible for Examination' : 'Attendance Shortfall Alert'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Table Section with Live Advice column */}
       <div className="bg-[#121622] border border-[#232a3b] rounded-2xl p-6 shadow-xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <h2 className="text-lg font-bold text-white tracking-wide">Subject Breakdown</h2>
+          <h2 className="text-lg font-bold text-white tracking-wide">Subject Breakdown & Recommendations</h2>
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-gray-400" />
             <div className="flex bg-[#171d2b] p-1 rounded-lg border border-[#232a3b]">
@@ -131,11 +301,14 @@ const AttendanceDetails = () => {
                 <th className="py-3.5 px-4">Present</th>
                 <th className="py-3.5 px-4">Absent</th>
                 <th className="py-3.5 px-4">Percentage</th>
+                <th className="py-3.5 px-4">Advice (75% Rule)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#1e2433] text-sm">
               {filteredRecords?.map((r) => {
                 const pctNumber = parseFloat(r.percentage);
+                const advice = getAttendanceAdvice(r.present, r.total);
+
                 let badgeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
                 if (pctNumber < 65) {
                   badgeColor = 'bg-red-500/10 text-red-400 border-red-500/30';
@@ -157,6 +330,20 @@ const AttendanceDetails = () => {
                     <td className="py-4 px-4">
                       <span className={`inline-block px-3 py-1 text-xs font-bold rounded-lg border ${badgeColor}`}>
                         {r.percentage}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4">
+                      <span
+                        className={`text-xs font-medium flex items-center gap-1.5 ${
+                          advice.type === 'safe' ? 'text-gray-300' : 'text-amber-400 font-semibold'
+                        }`}
+                      >
+                        {advice.type === 'safe' ? (
+                          <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                        ) : (
+                          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                        )}
+                        <span>{advice.message}</span>
                       </span>
                     </td>
                   </tr>

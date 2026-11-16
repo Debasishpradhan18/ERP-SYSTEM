@@ -12,9 +12,11 @@ import {
   BookMarked,
   MapPin,
   Sparkles,
+  CreditCard,
 } from 'lucide-react';
 import ModuleCard from '../../components/dashboard/ModuleCard';
 import CircularGauge from '../../components/common/CircularGauge';
+import StudentIDCardModal from '../../components/common/StudentIDCardModal';
 import api, { mockStudentData } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -23,6 +25,7 @@ const StudentDashboard = () => {
   const { user } = useAuth();
   const [dashboardData, setDashboardData] = useState(mockStudentData);
   const [loading, setLoading] = useState(false);
+  const [showIdCard, setShowIdCard] = useState(false);
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -99,11 +102,20 @@ const StudentDashboard = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            onClick={() => setShowIdCard(true)}
+            className="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#079BB5]/20 to-[#16A34A]/20 border border-[#079BB5]/40 text-xs font-bold text-white flex items-center gap-1.5 hover:brightness-125 transition shadow-sm"
+          >
+            <CreditCard className="w-3.5 h-3.5 text-[#079BB5]" />
+            <span>Virtual ID 🪪</span>
+          </button>
+
           <div className="px-3.5 py-1.5 rounded-full bg-[#171d2b] border border-[#232a3b] text-xs font-semibold text-[#079BB5] flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Semester 6</span>
           </div>
+
           <div className="px-3.5 py-1.5 rounded-full bg-[#171d2b] border border-[#232a3b] text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
             <span>CGPA: {dashboardData.student?.cgpa || 8.31}</span>
           </div>
@@ -212,6 +224,12 @@ const StudentDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Virtual ID Card Modal */}
+      <StudentIDCardModal
+        isOpen={showIdCard}
+        onClose={() => setShowIdCard(false)}
+      />
     </div>
   );
 };

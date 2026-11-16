@@ -6,7 +6,20 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('campus_erp_user');
-    return savedUser ? JSON.parse(savedUser) : null;
+    if (!savedUser) return null;
+    try {
+      const parsed = JSON.parse(savedUser);
+      const userKey = parsed.email || parsed.id || 'student';
+      const persistentAvatar =
+        localStorage.getItem(`campus_erp_avatar_${userKey}`) ||
+        localStorage.getItem('campus_erp_saved_avatar');
+      if (persistentAvatar) {
+        parsed.avatar = persistentAvatar;
+      }
+      return parsed;
+    } catch (e) {
+      return null;
+    }
   });
   const [token, setToken] = useState(() => localStorage.getItem('campus_erp_token'));
   const [loading, setLoading] = useState(false);
@@ -32,10 +45,24 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (response.data.success && response.data.user) {
-        setUser(response.data.user);
+        const returnedUser = response.data.user;
+        const userKey = returnedUser.email || returnedUser.rollNumber || returnedUser.id || 'student';
+        const persistentAvatar =
+          localStorage.getItem(`campus_erp_avatar_${userKey}`) ||
+          localStorage.getItem('campus_erp_saved_avatar');
+
+        // Preserve customized profile picture across logins
+        if (persistentAvatar && (!returnedUser.avatar || returnedUser.avatar.includes('photo-1534528741775-53994a69daeb'))) {
+          returnedUser.avatar = persistentAvatar;
+        } else if (returnedUser.avatar && !returnedUser.avatar.includes('photo-1534528741775-53994a69daeb')) {
+          localStorage.setItem('campus_erp_saved_avatar', returnedUser.avatar);
+          localStorage.setItem(`campus_erp_avatar_${userKey}`, returnedUser.avatar);
+        }
+
+        setUser(returnedUser);
         setToken(response.data.token);
-        localStorage.setItem('campus_erp_user', JSON.stringify(response.data.user));
-        return { success: true, user: response.data.user };
+        localStorage.setItem('campus_erp_user', JSON.stringify(returnedUser));
+        return { success: true, user: returnedUser };
       }
     } catch (err) {
       console.warn('Live API response fallback, auto-detecting demo role for immediate access:', err.message);
@@ -45,11 +72,16 @@ export const AuthProvider = ({ children }) => {
       const isIdentifierFaculty = identifier.toLowerCase().includes('faculty') || identifier.toLowerCase().includes('prof');
       const detectedRole = selectedRole || (isIdentifierAdmin ? 'admin' : isIdentifierFaculty ? 'faculty' : 'student');
 
+      const userKey = identifier || 'student';
+      const persistentAvatar =
+        localStorage.getItem(`campus_erp_avatar_${userKey}`) ||
+        localStorage.getItem('campus_erp_saved_avatar');
+
       let demoUser = {
         name: 'Debasish Pradhan',
         email: identifier || 'student@campus.edu',
         role: 'student',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+        avatar: persistentAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
         batch: 'B.Tech CSE | Final Year',
         department: 'Computer Science & Engineering',
       };
@@ -88,6 +120,7 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     localStorage.removeItem('campus_erp_user');
     localStorage.removeItem('campus_erp_token');
+    // Note: permanent user avatar (campus_erp_saved_avatar) is intentionally preserved so re-login never loses custom photos!
   };
 
   return (
